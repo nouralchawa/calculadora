@@ -141,25 +141,68 @@ class Keyboard(ttk.Frame):
             btn.grid(row=boton['r'], column=boton['c'], columnspan=w, rowspan=h)
 
 class Calculator(ttk.Frame):
-    def __init__(self, parent, command):
-        ttk.Frame.__init__(self, parent, width=WIDTH*4, height=HEIGHT*5)
+    valor1 = None
+    valor2 = None
+    r = None
+    operador = ''
+    cadena = ''
+
+    def __init__(self, parent):
+        ttk.Frame.__init__(self, parent, width=WIDTH*4, height=HEIGHT*6)
         self.pack_propagate(0)
         s = ttk.Style()
         s.theme_use('alt')
 
-        self.display = calculator.Display(self)
+        self.display = Display(self)
         self.display.pack(side=TOP, fill=BOTH, expand=True)
 
-        self.teclado = calculator.Keyboard(self, self.display.gestiona_calculos)
+        self.teclado = Keyboard(self, self.gestiona_calculos)
         self.teclado.pack(side=TOP)
 
+        
     def gestiona_calculos(self, tecla):
-        '''
-        Establecer toda la logica de calculos posibles en funcion de lo tecleado
-        variables
-        op1
-        op2
-        operacion
-        resultado
-        '''
-        pass
+
+        if tecla.isdigit() != 0 :
+            if not(self.cadena == '' and tecla == '0'):
+                self.cadena += tecla
+                self.display.refresh(self.cadena)
+        elif tecla in '+-x÷':
+            if self.valor1 == None:
+                self.valor1 = int(self.cadena)
+                self.cadena = ''
+                self.operador = tecla
+            else:
+                if not self.cadena:
+                    return
+                self.valor2 = int(self.cadena)
+                self.r = self.calculate()
+                self.display.refresh(self.r)
+                self.valor1 = self.r
+            self.cadena= ''
+                
+        elif tecla == '=':
+            if not self.cadena:
+                return
+            self.valor2 = int(self.cadena)
+            self.r = self.calculate()
+            self.display.refresh(self.r)
+            self.valor1 = self.r
+            self.cadena = ''
+        elif tecla == 'C':
+            self.valor1 = None
+            self.valor2 = None
+            self.r = None
+            self.operador = ''
+            self.cadena = ''
+            self.display.refresh('0')
+
+    def calculate(self):
+        if self.operador == '+':
+            return self.valor1 + self.valor2
+        elif self.operador == '-':
+            return self.valor1 - self.valor2
+        elif self.operador == 'x':
+            return self.valor1 * self.valor2
+        else:
+            return self.valor1 / self.valor2
+
