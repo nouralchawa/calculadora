@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import ttk
+from ast import literal_eval
 
 WIDTH = 68
 HEIGHT = 50
@@ -87,7 +88,7 @@ dbotones = [
         'w': 2
     },
     {
-        'text': ',',
+        'text': '.',
         'r': 4,
         'c': 2,
     },
@@ -114,6 +115,9 @@ class Display(ttk.Frame):
         self.label.pack(side=TOP, fill=BOTH, expand=True)
 
     def refresh(self, texto):
+        if not isinstance(texto, str):
+            texto = literal_eval(str(texto))
+
         self.label.config(text=texto)
 
 class CalcButton(ttk.Frame):
@@ -126,12 +130,15 @@ class CalcButton(ttk.Frame):
 
         ttk.Button(self, text=text, command=lambda: command(text)).pack(side=TOP, fill=BOTH, expand=True)
 
+        #ttk.Button(self, text=text, command=lambda : command(text)).pack(side=TOP, fill=BOTH, expand=True)
+
+    def send(self):
+        self.command(self.value)
+
 class Keyboard(ttk.Frame):
     def __init__(self, parent, command):
         ttk.Frame.__init__(self, parent, width=WIDTH*4, height=HEIGHT*5)
         self.pack_propagate(0)
-        s = ttk.Style()
-        s.theme_use('alt')
 
         for boton in dbotones:
             w = boton.get('w', 1)
@@ -159,33 +166,54 @@ class Calculator(ttk.Frame):
         self.teclado = Keyboard(self, self.gestiona_calculos)
         self.teclado.pack(side=TOP)
 
+    def formatNumber(self, numero):
+        if numero == int(numero):
+            return int(numero)
+        else:
+            return numero
         
     def gestiona_calculos(self, tecla):
+        print(tecla)
 
-        if tecla.isdigit() != 0 :
+        if tecla.isdigit():
             if not(self.cadena == '' and tecla == '0'):
                 self.cadena += tecla
                 self.display.refresh(self.cadena)
+
+        elif tecla == '.' and '.' not in self.cadena:
+            if self.cadena != '':
+                self.cadena  += tecla
+            else:
+                self.cadena = self.cadena +'0' + tecla
+            #self.cadena += tecla if cadena != '' else ('0'+ tecla)
+
+            self.display.refresh(self.cadena)
+
         elif tecla in '+-x÷':
             if self.valor1 == None:
-                self.valor1 = int(self.cadena)
-                self.cadena = ''
                 self.operador = tecla
+                self.valor1 = float(self.cadena)
+                self.cadena = ''
+                
             else:
                 if not self.cadena:
+                    self.operador = tecla
                     return
-                self.valor2 = int(self.cadena)
+                self.valor2 = float(self.cadena)
                 self.r = self.calculate()
+                self.operador = tecla
                 self.display.refresh(self.r)
                 self.valor1 = self.r
+                
             self.cadena= ''
                 
         elif tecla == '=':
             if not self.cadena:
                 return
-            self.valor2 = int(self.cadena)
+            self.valor2 = float(self.cadena)
             self.r = self.calculate()
             self.display.refresh(self.r)
+            self.operador = ''
             self.valor1 = self.r
             self.cadena = ''
         elif tecla == 'C':
@@ -195,6 +223,10 @@ class Calculator(ttk.Frame):
             self.operador = ''
             self.cadena = ''
             self.display.refresh('0')
+
+        #elif tecla == '+/-':
+            #if self.valor1 == None and not self.cadena:
+
 
     def calculate(self):
         if self.operador == '+':
